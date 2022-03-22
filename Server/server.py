@@ -7,8 +7,8 @@ import threading
 import time
 import tqdm
 from queue import Queue
-from crypto.Cipher import AES
-from crypto import Random
+from Crypto.Cipher import AES
+from Crypto import Random
 import keys
 
 threads = 2
@@ -40,6 +40,7 @@ decode_utf = lambda data: data.decode("utf-8")
 remove_quotes = lambda string: string.replace("\"", "")
 center = lambda string, title: f"{{:^{len(string)}}}".format(title)
 
+# TODO: where to save iv?
 def send(data):
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(hash_key, AES.MODE_CBC, iv)
@@ -100,6 +101,7 @@ def accept_socket():
 
 def help_menu():
     print("\n" + "--help")
+    print("--x close all connections")
     print("--l List all our connections")
 
 
@@ -118,6 +120,8 @@ def main_menu():
         elif strChoice == "--x":
             close_connections()
             break
+        elif strChoice == "--help":
+            help_menu()
         else:
             print("Invalid input! You can use the --help command")
 
